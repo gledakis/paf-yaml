@@ -1,0 +1,179 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: task-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 128M
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/volume/vol001"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: database-claim0
+  name: database-claim0
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: app
+  name: app
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: app
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: eubr-atmosphere-app
+          image: kontoeniki/atmosphere:1.1.0
+          env:
+            - name: DATABASE
+              value: jdbc:mysql://database:3306/atmosphere?useEncoding=true&useSSL=false&characterEncoding=UTF-8&useTimezone=true&&serverTimezone=UTC
+            - name: DATABASE_PASSWORD
+              value: rfEofrL1BnZuA7PMOyNz5Fq5zD10Wa24
+            - name: DATABASE_USER
+              value: app
+            - name: SPRING_PROFILES_ACTIVE
+              value: production
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: app
+  name: app
+spec:
+  type: NodePort
+  ports:
+  - name: "8080"
+    port: 8080
+    targetPort: 8080
+    nodePort: 31111
+  selector:
+    io.kompose.service: app
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: database
+  name: database
+spec:
+  ports:
+  - name: "3306"
+    port: 3306
+    targetPort: 3306
+  selector:
+    io.kompose.service: database
+status:
+  loadBalancer: {}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: database
+  name: database
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: database
+    spec:
+      containers:
+        - name: eubr-atmosphere-database
+          env:
+          - name: MYSQL_DATABASE
+            value: atmosphere
+          - name: MYSQL_PASSWORD
+            value: rfEofrL1BnZuA7PMOyNz5Fq5zD10Wa24
+          - name: MYSQL_ROOT_PASSWORD
+            value: rfEofrL1BnZuA7PMOyNz5Fq5zD10Wa24
+          - name: MYSQL_USER
+            value: app
+          image: mysql:5.7
+          ports:
+          - containerPort: 3306
+          resources: {}
+          volumeMounts:
+          - mountPath: /var/lib/mysql
+            name: database-claim0
+      restartPolicy: Always
+      volumes:
+        - name: database-claim0
+          persistentVolumeClaim:
+            claimName: database-claim0
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: phpmyadmin
+  name: phpmyadmin
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: phpmyadmin
+    spec:
+      containers:
+        - name: eubr-atmosphere-phpmyadmin
+          image: phpmyadmin/phpmyadmin
+          ports:
+          - containerPort: 80
+          resources: {}
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose-production.yml -o privacy-assessment-forms.yaml
+    kompose.version: 1.16.0 (0c01309)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: phpmyadmin
+  name: phpmyadmin
+spec:
+  ports:
+  - name: "8060"
+    port: 8060
+    targetPort: 80
+  selector:
+    io.kompose.service: phpmyadmin
+status:
+  loadBalancer: {}

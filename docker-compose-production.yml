@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+
+  app:
+    container_name: "eubr-atmosphere_app"
+    image: kontoeniki/atmosphere:1.1.0
+    environment:
+      DATABASE: "jdbc:mysql://database:3306/atmosphere?useEncoding=true&useSSL=false&characterEncoding=UTF-8&useTimezone=true&&serverTimezone=UTC"
+      SPRING_PROFILES_ACTIVE: production
+      DATABASE_USER: app
+      DATABASE_PASSWORD: rfEofrL1BnZuA7PMOyNz5Fq5zD10Wa24
+    ports:
+      - 8080:8080
+    depends_on:
+      - database
+    restart: always
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  database:
+    container_name: "eubr-atmosphere_database"
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: atmosphere
+      MYSQL_USER: app
+      MYSQL_PASSWORD: rfEofrL1BnZuA7PMOyNz5Fq5zD10Wa24
+      MYSQL_ROOT_PASSWORD: rfEofrL1BnZuA7PMOyNz5Fq5zD10Wa24
+    command: "mysqld --default-authentication-plugin=mysql_native_password --collation-server=utf8_unicode_ci --character-set-server=utf8"
+    ports:
+      - 8000:3306
+    restart: always
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+    volumes:
+      - /mnt/srv42/atmosphere/database/data:/var/lib/mysql
+
+  phpmyadmin:
+     container_name: "eubr-atmosphere_phpmyadmin"
+     image: phpmyadmin/phpmyadmin
+     links:
+       - database:db
+     ports:
+       - 8060:80
+     restart: always
+     logging:
+       options:
+         max-size: "10m"
+         max-file: "10"
