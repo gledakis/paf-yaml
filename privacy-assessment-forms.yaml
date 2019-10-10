@@ -47,7 +47,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: eubr-atmosphere-app
-          image: kontoeniki/atmosphere:1.1.0
+          image: gledakis/atmosphere:1.1.1
           env:
             - name: DATABASE
               value: jdbc:mysql://database:3306/atmosphere?useEncoding=true&useSSL=false&characterEncoding=UTF-8&useTimezone=true&&serverTimezone=UTC
