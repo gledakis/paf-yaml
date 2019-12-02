@@ -57,10 +57,10 @@ spec:
               value: app
             - name: SPRING_PROFILES_ACTIVE
               value: production
-            - name: LEMONADE_URL 
+            - name: LEMONADE_URL
               value: http://citrus:8080/limonero/datasources
-            - name: LEMONADE_TOKEN 
-              value: 7850561 (edited)
+            - name: LEMONADE_TOKEN
+              value: 7850561
           ports:
             - containerPort: 8080
 ---
